@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"taskforge/internal/api"
 )
@@ -45,9 +46,14 @@ func (h TaskHandler) Post(w http.ResponseWriter, r *http.Request) {
 func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	task, err := h.service.GetById(id)
+	task, err := h.service.GetByID(id)
 	if err != nil {
-		// ...
+		if errors.Is(err, ErrTaskNotFound) {
+			api.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		api.WriteErrorResponse(w, http.StatusInternalServerError, "internal server error")
 	}
 
 	w.Header().Set("Content-Type", "application/json")

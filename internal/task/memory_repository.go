@@ -29,14 +29,14 @@ func (r *MemoryRepository) Create(task Task) error {
 	return nil
 }
 
-func (r *MemoryRepository) GetById(id string) (Task, error) {
+func (r *MemoryRepository) GetByID(id string) (Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	task, exists := r.tasks[id]
 
 	if !exists {
-		return Task{}, fmt.Errorf("task with ID %s not found", id)
+		return Task{}, ErrTaskNotFound
 	}
 
 	return task, nil

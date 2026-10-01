@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 type TaskType string
@@ -13,6 +14,8 @@ const (
 	TaskStatusCompleted TaskStatus = "completed"
 	TaskStatusFailed    TaskStatus = "failed"
 )
+
+var ErrTaskNotFound = errors.New("task not found")
 
 type CreateTaskRequest struct {
 	Type    TaskType

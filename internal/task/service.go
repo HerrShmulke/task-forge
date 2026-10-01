@@ -32,8 +32,8 @@ func (s *TaskService) Create(request CreateTaskRequest) (Task, error) {
 	return task, nil
 }
 
-func (s *TaskService) GetById(id string) (Task, error) {
-	task, err := s.repository.GetById(id)
+func (s *TaskService) GetByID(id string) (Task, error) {
+	task, err := s.repository.GetByID(id)
 
 	if err != nil {
 		return Task{}, err
