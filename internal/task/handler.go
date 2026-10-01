@@ -63,8 +63,8 @@ func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(toCreateTaskResponse(task))
 }
 
-func toCreateTaskResponse(task Task) CreateTaskResponse {
-	return CreateTaskResponse{
+func toCreateTaskResponse(task Task) TaskResponse {
+	return TaskResponse{
 		ID:      task.ID,
 		Type:    task.Type,
 		Payload: task.Payload,

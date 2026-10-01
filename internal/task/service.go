@@ -1,6 +1,10 @@
 package task
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type TaskService struct {
 	repository TaskRepository
@@ -18,11 +22,16 @@ func (s *TaskService) Create(request CreateTaskRequest) (Task, error) {
 		return Task{}, err
 	}
 
+	now := time.Now()
+
 	task := Task{
-		ID:      id.String(),
-		Type:    request.Type,
-		Payload: request.Payload,
-		Status:  TaskStatusPending,
+		ID:        id.String(),
+		Type:      request.Type,
+		Payload:   request.Payload,
+		Status:    TaskStatusPending,
+		Attempts:  0,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	if err := s.repository.Create(task); err != nil {

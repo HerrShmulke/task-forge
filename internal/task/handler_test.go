@@ -38,7 +38,7 @@ func TestTaskHandler_CreateTask(t *testing.T) {
 		t.Fatalf("expected Content-Type application/json, got %q", contentType)
 	}
 
-	var response CreateTaskResponse
+	var response TaskResponse
 
 	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
@@ -158,7 +158,7 @@ func TestTaskHandler_CreateTask_GeneratesUniqueIDs(t *testing.T) {
 		t.Fatalf("expected first status %d, got %d", http.StatusCreated, recorder1.Code)
 	}
 
-	var response1 CreateTaskResponse
+	var response1 TaskResponse
 
 	if err := json.NewDecoder(recorder1.Body).Decode(&response1); err != nil {
 		t.Fatalf("failed to decode first response: %v", err)
@@ -178,7 +178,7 @@ func TestTaskHandler_CreateTask_GeneratesUniqueIDs(t *testing.T) {
 		t.Fatalf("expected second status %d, got %d", http.StatusCreated, recorder2.Code)
 	}
 
-	var response2 CreateTaskResponse
+	var response2 TaskResponse
 
 	if err := json.NewDecoder(recorder2.Body).Decode(&response2); err != nil {
 		t.Fatalf("failed to decode second response: %v", err)
