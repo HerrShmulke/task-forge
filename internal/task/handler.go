@@ -49,15 +49,16 @@ func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
 	task, err := h.service.GetByID(id)
 	if err != nil {
 		if errors.Is(err, ErrTaskNotFound) {
-			api.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			api.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return
 		}
 
 		api.WriteErrorResponse(w, http.StatusInternalServerError, "internal server error")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(toCreateTaskResponse(task))
 }
