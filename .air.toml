@@ -1,0 +1,34 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/main ./cmd/server"
+entrypoint = ["./tmp/main"]
+
+# Следить только за Go-файлами
+include_ext = ["go"]
+
+# Не следить за временными и служебными директориями
+exclude_dir = ["tmp", "vendor", "testdata"]
+
+# Не реагировать на тестовые файлы
+exclude_regex = ["_test.go"]
+
+# Использовать polling вместо fsnotify
+poll = true
+poll_interval = 500
+
+# Небольшая задержка перед пересборкой
+delay = 500
+
+# Не оставлять старый процесс работающим при ошибке сборки
+stop_on_error = true
+
+[misc]
+clean_on_exit = true
+
+[screen]
+clear_on_rebuild = true
+
+[log]
+time = true

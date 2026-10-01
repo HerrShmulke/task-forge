@@ -1,0 +1,39 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: go-app
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - .env
+
+    depends_on:
+      - postgres
+
+    volumes:
+      - .:/app
+
+  postgres:
+    image: postgres:18
+
+    container_name: go-postgres
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:

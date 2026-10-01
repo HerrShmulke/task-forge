@@ -1,0 +1,12 @@
+.git
+.gitignore
+
+.env
+
+tmp/
+bin/
+
+.idea/
+.vscode/
+
+*.log
