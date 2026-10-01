@@ -40,7 +40,7 @@ func (h TaskHandler) Post(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	json.NewEncoder(w).Encode(toCreateTaskResponse(newTask))
+	json.NewEncoder(w).Encode(toTaskResponse(newTask))
 }
 
 func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -60,14 +60,17 @@ func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(toCreateTaskResponse(task))
+	json.NewEncoder(w).Encode(toTaskResponse(task))
 }
 
-func toCreateTaskResponse(task Task) TaskResponse {
+func toTaskResponse(task Task) TaskResponse {
 	return TaskResponse{
-		ID:      task.ID,
-		Type:    task.Type,
-		Payload: task.Payload,
-		Status:  task.Status,
+		ID:        task.ID,
+		Type:      task.Type,
+		Payload:   task.Payload,
+		Status:    task.Status,
+		Attempts:  task.Attempts,
+		CreatedAt: task.CreatedAt,
+		UpdatedAt: task.UpdatedAt,
 	}
 }
