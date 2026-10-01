@@ -16,7 +16,7 @@ func NewTaskHandler(service *TaskService) *TaskHandler {
 	}
 }
 
-func (h TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h TaskHandler) Post(w http.ResponseWriter, r *http.Request) {
 	req := CreateTaskRequest{}
 
 	decoder := json.NewDecoder(r.Body)
@@ -40,6 +40,20 @@ func (h TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	json.NewEncoder(w).Encode(toCreateTaskResponse(newTask))
+}
+
+func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	task, err := h.service.GetById(id)
+	if err != nil {
+		// ...
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(w).Encode(toCreateTaskResponse(task))
 }
 
 func toCreateTaskResponse(task Task) CreateTaskResponse {

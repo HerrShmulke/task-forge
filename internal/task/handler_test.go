@@ -28,7 +28,7 @@ func TestTaskHandler_CreateTask(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d", http.StatusCreated, recorder.Code)
@@ -76,7 +76,7 @@ func TestTaskHandler_InvalidJSON(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, recorder.Code)
@@ -113,7 +113,7 @@ func TestTaskHandler_MissingType(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, recorder.Code)
@@ -152,7 +152,7 @@ func TestTaskHandler_CreateTask_GeneratesUniqueIDs(t *testing.T) {
 
 	recorder1 := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder1, request1)
+	handler.Post(recorder1, request1)
 
 	if recorder1.Code != http.StatusCreated {
 		t.Fatalf("expected first status %d, got %d", http.StatusCreated, recorder1.Code)
@@ -172,7 +172,7 @@ func TestTaskHandler_CreateTask_GeneratesUniqueIDs(t *testing.T) {
 
 	recorder2 := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder2, request2)
+	handler.Post(recorder2, request2)
 
 	if recorder2.Code != http.StatusCreated {
 		t.Fatalf("expected second status %d, got %d", http.StatusCreated, recorder2.Code)

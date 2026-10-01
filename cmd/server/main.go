@@ -38,7 +38,8 @@ func main() {
 	taskRepository := task.NewMemoryRepository()
 	taskService := task.NewTaskService(taskRepository)
 	taskHandler := task.NewTaskHandler(taskService)
-	mux.Handle("POST /tasks", taskHandler)
+	mux.HandleFunc("POST /tasks", taskHandler.Post)
+	mux.HandleFunc("GET /tasks/{id}", taskHandler.Get)
 
 	server := &http.Server{
 		Addr:    ":" + strconv.Itoa(cfg.HTTPPort),
