@@ -7,11 +7,16 @@ import (
 	"taskforge/internal/api"
 )
 
-type TaskHandler struct {
-	service *TaskService
+type taskService interface {
+	Create(CreateTaskRequest) (Task, error)
+	GetByID(string) (Task, error)
 }
 
-func NewTaskHandler(service *TaskService) *TaskHandler {
+type TaskHandler struct {
+	service taskService
+}
+
+func NewTaskHandler(service taskService) *TaskHandler {
 	return &TaskHandler{
 		service: service,
 	}
