@@ -53,6 +53,11 @@ func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.service.GetByID(id)
 	if err != nil {
+		if errors.Is(err, ErrInvalidTaskId) {
+			api.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		if errors.Is(err, ErrTaskNotFound) {
 			api.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 			return

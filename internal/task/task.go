@@ -17,6 +17,7 @@ const (
 )
 
 var ErrTaskNotFound = errors.New("task not found")
+var ErrInvalidTaskId = errors.New("invalid task id")
 
 type CreateTaskRequest struct {
 	Type    TaskType
