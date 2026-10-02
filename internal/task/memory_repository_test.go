@@ -10,7 +10,7 @@ func TestMemoryRepository_Create(t *testing.T) {
 	repository := NewMemoryRepository()
 
 	task := Task{
-		ID:     "task-123",
+		ID:     "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:   TaskType("email"),
 		Status: TaskStatusPending,
 	}
@@ -36,7 +36,7 @@ func TestMemoryRepository_Create_DuplicateID(t *testing.T) {
 	repository := NewMemoryRepository()
 
 	task := Task{
-		ID:     "task-123",
+		ID:     "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:   TaskType("email"),
 		Status: TaskStatusPending,
 	}
@@ -56,7 +56,7 @@ func TestMemoryRepository_GetByID(t *testing.T) {
 	repository := NewMemoryRepository()
 
 	expectedTask := Task{
-		ID:     "task-123",
+		ID:     "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:   TaskType("email"),
 		Status: TaskStatusPending,
 	}
@@ -79,7 +79,7 @@ func TestMemoryRepository_GetByID(t *testing.T) {
 func TestMemoryRepository_GetByID_NotFound(t *testing.T) {
 	repository := NewMemoryRepository()
 
-	_, err := repository.GetByID("task-123")
+	_, err := repository.GetByID("01a0fb8d-7872-70ec-8000-baabc6874a55")
 
 	if !errors.Is(err, ErrTaskNotFound) {
 		t.Errorf("expected ErrTaskNotFound, got %v", err)

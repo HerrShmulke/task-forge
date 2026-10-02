@@ -103,7 +103,7 @@ func TestTaskService_Create_RepositoryError(t *testing.T) {
 
 func TestTaskService_GetByID(t *testing.T) {
 	expectedTask := Task{
-		ID:     "task-123",
+		ID:     "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:   TaskType("email"),
 		Status: TaskStatusPending,
 	}
@@ -142,7 +142,7 @@ func TestTaskService_GetByID_RepositoryError(t *testing.T) {
 
 	service := NewTaskService(repository)
 
-	_, err := service.GetByID("task-123")
+	_, err := service.GetByID("01a0fb8d-7872-70ec-8000-baabc6874a55")
 
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("expected error %v, got %v", expectedErr, err)

@@ -28,7 +28,7 @@ func TestTaskHandler_Post(t *testing.T) {
 	updatedAt := createdAt
 
 	expectedTask := Task{
-		ID:        "task-123",
+		ID:        "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:      TaskType("email"),
 		Payload:   json.RawMessage(`{"to":"user@example.com"}`),
 		Status:    TaskStatusPending,
@@ -189,7 +189,7 @@ func TestTaskHandler_Post_ServiceError(t *testing.T) {
 
 func TestTaskHandler_Get(t *testing.T) {
 	expectedTask := Task{
-		ID:        "task-123",
+		ID:        "01a0fb8d-7872-70ec-8000-baabc6874a55",
 		Type:      TaskType("email"),
 		Payload:   json.RawMessage(`{"to":"user@example.com"}`),
 		Status:    TaskStatusPending,
@@ -272,7 +272,7 @@ func TestTaskHandler_Get_NotFound(t *testing.T) {
 		nil,
 	)
 
-	request.SetPathValue("id", "task-123")
+	request.SetPathValue("id", "01a0fb8d-7872-70ec-8000-baabc6874a55")
 
 	recorder := httptest.NewRecorder()
 
@@ -300,7 +300,7 @@ func TestTaskHandler_Get_ServiceError(t *testing.T) {
 		nil,
 	)
 
-	request.SetPathValue("id", "task-123")
+	request.SetPathValue("id", "01a0fb8d-7872-70ec-8000-baabc6874a55")
 
 	recorder := httptest.NewRecorder()
 
