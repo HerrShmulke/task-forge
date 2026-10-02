@@ -161,7 +161,7 @@ func TestTaskService_GetByID_InvalidID(t *testing.T) {
 
 	_, err := service.GetByID("invalid-id")
 
-	if !errors.Is(err, ErrInvalidTaskId) {
+	if !errors.Is(err, ErrInvalidTaskID) {
 		t.Errorf("expected ErrInvalidTaskId, got %v", err)
 	}
 }

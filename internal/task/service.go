@@ -42,9 +42,9 @@ func (s *TaskService) Create(request CreateTaskRequest) (Task, error) {
 }
 
 func (s *TaskService) GetByID(id string) (Task, error) {
-	err := ParseTaskID(id)
+	err := ValidateTaskID(id)
 	if err != nil {
-		return Task{}, ErrInvalidTaskId
+		return Task{}, ErrInvalidTaskID
 	}
 
 	task, err := s.repository.GetByID(id)
@@ -56,6 +56,6 @@ func (s *TaskService) GetByID(id string) (Task, error) {
 	return task, nil
 }
 
-func ParseTaskID(value string) error {
+func ValidateTaskID(value string) error {
 	return uuid.Validate(value)
 }

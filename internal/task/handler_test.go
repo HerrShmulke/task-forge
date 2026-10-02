@@ -268,7 +268,7 @@ func TestTaskHandler_Get_NotFound(t *testing.T) {
 
 	request := httptest.NewRequest(
 		http.MethodGet,
-		"/tasks/task-123",
+		"/tasks/01a0fb8d-7872-70ec-8000-baabc6874a55",
 		nil,
 	)
 
