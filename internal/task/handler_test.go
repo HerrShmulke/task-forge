@@ -2,33 +2,63 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
-func TestTaskHandler_CreateTask(t *testing.T) {
-	repository := NewMemoryRepository()
-	service := NewTaskService(repository)
-	handler := NewTaskHandler(service)
+type mockTaskService struct {
+	createFunc  func(CreateTaskRequest) (Task, error)
+	getByIDFunc func(string) (Task, error)
+}
 
-	body := `{
-		"type": "email",
-		"payload": {
-			"to": "user@example.com"
-		}
-	}`
+func (m mockTaskService) Create(request CreateTaskRequest) (Task, error) {
+	return m.createFunc(request)
+}
+
+func (m mockTaskService) GetByID(id string) (Task, error) {
+	return m.getByIDFunc(id)
+}
+
+func TestTaskHandler_Post(t *testing.T) {
+	createdAt := time.Now()
+	updatedAt := createdAt
+
+	expectedTask := Task{
+		ID:        "01a0fb8d-7872-70ec-8000-baabc6874a55",
+		Type:      TaskType("email"),
+		Payload:   json.RawMessage(`{"to":"user@example.com"}`),
+		Status:    TaskStatusPending,
+		Attempts:  0,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}
+
+	service := mockTaskService{
+		createFunc: func(request CreateTaskRequest) (Task, error) {
+			return expectedTask, nil
+		},
+	}
+
+	handler := NewTaskHandler(service)
 
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/tasks",
-		strings.NewReader(body),
+		strings.NewReader(`{
+			"type": "email",
+			"payload": {
+				"to": "user@example.com"
+			}
+		}`),
 	)
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d", http.StatusCreated, recorder.Code)
@@ -38,34 +68,49 @@ func TestTaskHandler_CreateTask(t *testing.T) {
 		t.Fatalf("expected Content-Type application/json, got %q", contentType)
 	}
 
-	var response CreateTaskResponse
+	var response TaskResponse
 
 	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if response.ID == "" {
-		t.Error("expected task ID to be present")
+	if response.ID != expectedTask.ID {
+		t.Errorf("expected ID %q, got %q", expectedTask.ID, response.ID)
 	}
 
-	if response.Type != TaskType("email") {
-		t.Errorf("expected type %q, got %q", "email", response.Type)
+	if response.Type != expectedTask.Type {
+		t.Errorf("expected type %q, got %q", expectedTask.Type, response.Type)
 	}
 
-	if response.Status != TaskStatusPending {
-		t.Errorf("expected status %q, got %q", TaskStatusPending, response.Status)
+	if string(response.Payload) != string(expectedTask.Payload) {
+		t.Errorf("expected payload %s, got %s", expectedTask.Payload, response.Payload)
 	}
 
-	expectedPayload := `{"to":"user@example.com"}`
+	if response.Status != expectedTask.Status {
+		t.Errorf("expected status %q, got %q", expectedTask.Status, response.Status)
+	}
 
-	if string(response.Payload) != expectedPayload {
-		t.Errorf("expected payload %s, got %s", expectedPayload, response.Payload)
+	if response.Attempts != expectedTask.Attempts {
+		t.Errorf("expected attempts %d, got %d", expectedTask.Attempts, response.Attempts)
+	}
+
+	if !response.CreatedAt.Equal(expectedTask.CreatedAt) {
+		t.Errorf("expected createdAt %v, got %v", expectedTask.CreatedAt, response.CreatedAt)
+	}
+
+	if !response.UpdatedAt.Equal(expectedTask.UpdatedAt) {
+		t.Errorf("expected updatedAt %v, got %v", expectedTask.UpdatedAt, response.UpdatedAt)
 	}
 }
 
-func TestTaskHandler_InvalidJSON(t *testing.T) {
-	repository := NewMemoryRepository()
-	service := NewTaskService(repository)
+func TestTaskHandler_Post_InvalidJSON(t *testing.T) {
+	service := mockTaskService{
+		createFunc: func(request CreateTaskRequest) (Task, error) {
+			t.Fatal("Create should not be called")
+			return Task{}, nil
+		},
+	}
+
 	handler := NewTaskHandler(service)
 
 	request := httptest.NewRequest(
@@ -76,33 +121,23 @@ func TestTaskHandler_InvalidJSON(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, recorder.Code)
 	}
 
-	var response struct {
-		Status string `json:"status"`
-		Error  string `json:"error"`
-	}
-
-	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-
-	if response.Status != "error" {
-		t.Errorf("expected status %q, got %q", "error", response.Status)
-	}
-
-	if response.Error != "invalid request body" {
-		t.Errorf("expected error %q, got %q", "invalid request body", response.Error)
-	}
+	assertErrorResponse(t, recorder, "invalid request body")
 }
 
-func TestTaskHandler_MissingType(t *testing.T) {
-	repository := NewMemoryRepository()
-	service := NewTaskService(repository)
+func TestTaskHandler_Post_MissingType(t *testing.T) {
+	service := mockTaskService{
+		createFunc: func(request CreateTaskRequest) (Task, error) {
+			t.Fatal("Create should not be called")
+			return Task{}, nil
+		},
+	}
+
 	handler := NewTaskHandler(service)
 
 	request := httptest.NewRequest(
@@ -113,11 +148,177 @@ func TestTaskHandler_MissingType(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	handler.ServeHTTP(recorder, request)
+	handler.Post(recorder, request)
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, recorder.Code)
 	}
+
+	assertErrorResponse(t, recorder, "type is required")
+}
+
+func TestTaskHandler_Post_ServiceError(t *testing.T) {
+	service := mockTaskService{
+		createFunc: func(request CreateTaskRequest) (Task, error) {
+			return Task{}, errors.New("repository error")
+		},
+	}
+
+	handler := NewTaskHandler(service)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/tasks",
+		strings.NewReader(`{"type":"email"}`),
+	)
+
+	recorder := httptest.NewRecorder()
+
+	handler.Post(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf(
+			"expected status %d, got %d",
+			http.StatusInternalServerError,
+			recorder.Code,
+		)
+	}
+
+	assertErrorResponse(t, recorder, "internal server error")
+}
+
+func TestTaskHandler_Get(t *testing.T) {
+	expectedTask := Task{
+		ID:        "01a0fb8d-7872-70ec-8000-baabc6874a55",
+		Type:      TaskType("email"),
+		Payload:   json.RawMessage(`{"to":"user@example.com"}`),
+		Status:    TaskStatusPending,
+		Attempts:  0,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	service := mockTaskService{
+		getByIDFunc: func(id string) (Task, error) {
+			if id != expectedTask.ID {
+				t.Errorf("expected ID %q, got %q", expectedTask.ID, id)
+			}
+
+			return expectedTask, nil
+		},
+	}
+
+	handler := NewTaskHandler(service)
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/tasks/"+expectedTask.ID,
+		nil,
+	)
+
+	request.SetPathValue("id", expectedTask.ID)
+
+	recorder := httptest.NewRecorder()
+
+	handler.Get(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, recorder.Code)
+	}
+
+	if contentType := recorder.Header().Get("Content-Type"); contentType != "application/json" {
+		t.Fatalf("expected Content-Type application/json, got %q", contentType)
+	}
+
+	var response TaskResponse
+
+	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if response.ID != expectedTask.ID {
+		t.Errorf("expected ID %q, got %q", expectedTask.ID, response.ID)
+	}
+
+	if response.Type != expectedTask.Type {
+		t.Errorf("expected type %q, got %q", expectedTask.Type, response.Type)
+	}
+
+	if string(response.Payload) != string(expectedTask.Payload) {
+		t.Errorf("expected payload %s, got %s", expectedTask.Payload, response.Payload)
+	}
+
+	if response.Status != expectedTask.Status {
+		t.Errorf("expected status %q, got %q", expectedTask.Status, response.Status)
+	}
+
+	if response.Attempts != expectedTask.Attempts {
+		t.Errorf("expected attempts %d, got %d", expectedTask.Attempts, response.Attempts)
+	}
+}
+
+func TestTaskHandler_Get_NotFound(t *testing.T) {
+	service := mockTaskService{
+		getByIDFunc: func(id string) (Task, error) {
+			return Task{}, ErrTaskNotFound
+		},
+	}
+
+	handler := NewTaskHandler(service)
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/tasks/01a0fb8d-7872-70ec-8000-baabc6874a55",
+		nil,
+	)
+
+	request.SetPathValue("id", "01a0fb8d-7872-70ec-8000-baabc6874a55")
+
+	recorder := httptest.NewRecorder()
+
+	handler.Get(recorder, request)
+
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, recorder.Code)
+	}
+
+	assertErrorResponse(t, recorder, "task not found")
+}
+
+func TestTaskHandler_Get_ServiceError(t *testing.T) {
+	service := mockTaskService{
+		getByIDFunc: func(id string) (Task, error) {
+			return Task{}, errors.New("repository error")
+		},
+	}
+
+	handler := NewTaskHandler(service)
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/tasks/task-123",
+		nil,
+	)
+
+	request.SetPathValue("id", "01a0fb8d-7872-70ec-8000-baabc6874a55")
+
+	recorder := httptest.NewRecorder()
+
+	handler.Get(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf(
+			"expected status %d, got %d",
+			http.StatusInternalServerError,
+			recorder.Code,
+		)
+	}
+
+	assertErrorResponse(t, recorder, "internal server error")
+}
+
+func assertErrorResponse(t *testing.T, recorder *httptest.ResponseRecorder, expectedMessage string) {
+	t.Helper()
 
 	var response struct {
 		Status string `json:"status"`
@@ -125,66 +326,14 @@ func TestTaskHandler_MissingType(t *testing.T) {
 	}
 
 	if err := json.NewDecoder(recorder.Body).Decode(&response); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+		t.Fatalf("failed to decode error response: %v", err)
 	}
 
 	if response.Status != "error" {
 		t.Errorf("expected status %q, got %q", "error", response.Status)
 	}
 
-	if response.Error != "type is required" {
-		t.Errorf("expected error %q, got %q", "type is required", response.Error)
-	}
-}
-
-func TestTaskHandler_CreateTask_GeneratesUniqueIDs(t *testing.T) {
-	repository := NewMemoryRepository()
-	service := NewTaskService(repository)
-	handler := NewTaskHandler(service)
-
-	body := `{"type":"email","payload":{"to":"user@example.com"}}`
-
-	request1 := httptest.NewRequest(
-		http.MethodPost,
-		"/tasks",
-		strings.NewReader(body),
-	)
-
-	recorder1 := httptest.NewRecorder()
-
-	handler.ServeHTTP(recorder1, request1)
-
-	if recorder1.Code != http.StatusCreated {
-		t.Fatalf("expected first status %d, got %d", http.StatusCreated, recorder1.Code)
-	}
-
-	var response1 CreateTaskResponse
-
-	if err := json.NewDecoder(recorder1.Body).Decode(&response1); err != nil {
-		t.Fatalf("failed to decode first response: %v", err)
-	}
-
-	request2 := httptest.NewRequest(
-		http.MethodPost,
-		"/tasks",
-		strings.NewReader(body),
-	)
-
-	recorder2 := httptest.NewRecorder()
-
-	handler.ServeHTTP(recorder2, request2)
-
-	if recorder2.Code != http.StatusCreated {
-		t.Fatalf("expected second status %d, got %d", http.StatusCreated, recorder2.Code)
-	}
-
-	var response2 CreateTaskResponse
-
-	if err := json.NewDecoder(recorder2.Body).Decode(&response2); err != nil {
-		t.Fatalf("failed to decode second response: %v", err)
-	}
-
-	if response1.ID == response2.ID {
-		t.Errorf("expected unique IDs, got the same ID %q", response1.ID)
+	if response.Error != expectedMessage {
+		t.Errorf("expected error %q, got %q", expectedMessage, response.Error)
 	}
 }

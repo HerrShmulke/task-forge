@@ -2,6 +2,8 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
+	"time"
 )
 
 type TaskType string
@@ -14,21 +16,30 @@ const (
 	TaskStatusFailed    TaskStatus = "failed"
 )
 
+var ErrTaskNotFound = errors.New("task not found")
+var ErrInvalidTaskID = errors.New("invalid task id")
+
 type CreateTaskRequest struct {
 	Type    TaskType
 	Payload json.RawMessage
 }
 
-type CreateTaskResponse struct {
-	ID      string          `json:"id"`
-	Type    TaskType        `json:"type"`
-	Payload json.RawMessage `json:"payload"`
-	Status  TaskStatus      `json:"status"`
+type TaskResponse struct {
+	ID        string          `json:"id"`
+	Type      TaskType        `json:"type"`
+	Payload   json.RawMessage `json:"payload"`
+	Status    TaskStatus      `json:"status"`
+	Attempts  int             `json:"attempts"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
 type Task struct {
-	ID      string
-	Type    TaskType
-	Payload json.RawMessage
-	Status  TaskStatus
+	ID        string
+	Type      TaskType
+	Payload   json.RawMessage
+	Status    TaskStatus
+	Attempts  int
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

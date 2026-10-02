@@ -2,21 +2,27 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"taskforge/internal/api"
 )
 
-type TaskHandler struct {
-	service *TaskService
+type taskService interface {
+	Create(CreateTaskRequest) (Task, error)
+	GetByID(string) (Task, error)
 }
 
-func NewTaskHandler(service *TaskService) *TaskHandler {
+type TaskHandler struct {
+	service taskService
+}
+
+func NewTaskHandler(service taskService) *TaskHandler {
 	return &TaskHandler{
 		service: service,
 	}
 }
 
-func (h TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h TaskHandler) Post(w http.ResponseWriter, r *http.Request) {
 	req := CreateTaskRequest{}
 
 	decoder := json.NewDecoder(r.Body)
@@ -39,14 +45,42 @@ func (h TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	json.NewEncoder(w).Encode(toCreateTaskResponse(newTask))
+	json.NewEncoder(w).Encode(toTaskResponse(newTask))
 }
 
-func toCreateTaskResponse(task Task) CreateTaskResponse {
-	return CreateTaskResponse{
-		ID:      task.ID,
-		Type:    task.Type,
-		Payload: task.Payload,
-		Status:  task.Status,
+func (h TaskHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	task, err := h.service.GetByID(id)
+	if err != nil {
+		if errors.Is(err, ErrInvalidTaskID) {
+			api.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if errors.Is(err, ErrTaskNotFound) {
+			api.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		api.WriteErrorResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(toTaskResponse(task))
+}
+
+func toTaskResponse(task Task) TaskResponse {
+	return TaskResponse{
+		ID:        task.ID,
+		Type:      task.Type,
+		Payload:   task.Payload,
+		Status:    task.Status,
+		Attempts:  task.Attempts,
+		CreatedAt: task.CreatedAt,
+		UpdatedAt: task.UpdatedAt,
 	}
 }
