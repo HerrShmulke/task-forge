@@ -148,3 +148,20 @@ func TestTaskService_GetByID_RepositoryError(t *testing.T) {
 		t.Errorf("expected error %v, got %v", expectedErr, err)
 	}
 }
+
+func TestTaskService_GetByID_InvalidID(t *testing.T) {
+	repository := mockTaskRepository{
+		getByIDFunc: func(id string) (Task, error) {
+			t.Fatal("GetByID should not be called")
+			return Task{}, nil
+		},
+	}
+
+	service := NewTaskService(repository)
+
+	_, err := service.GetByID("invalid-id")
+
+	if !errors.Is(err, ErrInvalidTaskId) {
+		t.Errorf("expected ErrInvalidTaskId, got %v", err)
+	}
+}
